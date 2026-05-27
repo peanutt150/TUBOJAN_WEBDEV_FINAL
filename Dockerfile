@@ -29,8 +29,8 @@ RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
 
 # Nginx configs
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY nginx-site.conf /etc/nginx/conf.d/default.conf
+COPY nginx-main.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Entry script
 COPY entrypoint.sh /entrypoint.sh
