@@ -22,7 +22,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 COPY . .
 
 # Install dependencies
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --no-scripts
 
 # Fix Symfony writable dirs (IMPORTANT)
 RUN mkdir -p var/cache var/log var/sessions \
