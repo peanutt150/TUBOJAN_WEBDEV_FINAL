@@ -1,0 +1,21 @@
+{
+    "@symfony\/stimulus-bundle\/controllers.js": "\/assets\/@symfony\/stimulus-bundle\/controllers-IWeobkd.js",
+    "@symfony\/stimulus-bundle\/loader.js": "\/assets\/@symfony\/stimulus-bundle\/loader-V1GtHuK.js",
+    "@symfony\/ux-turbo\/turbo_controller.js": "\/assets\/@symfony\/ux-turbo\/turbo_controller-8wQNi2p.js",
+    "@symfony\/ux-turbo\/turbo_stream_controller.js": "\/assets\/@symfony\/ux-turbo\/turbo_stream_controller-LcKyCZE.js",
+    "app.js": "\/assets\/app-KS9PLn4.js",
+    "controllers\/csrf_protection_controller.js": "\/assets\/controllers\/csrf_protection_controller-xsifGyW.js",
+    "controllers\/hello_controller.js": "\/assets\/controllers\/hello_controller-h7Y4WCm.js",
+    "images\/products\/LEA.png": "\/assets\/images\/products\/LEA-ys53H1V.png",
+    "images\/products\/cool.jpg": "\/assets\/images\/products\/cool-dlGT-JV.jpg",
+    "images\/products\/impadia.webp": "\/assets\/images\/products\/impadia-AEwzl5N.webp",
+    "images\/products\/jullie.webp": "\/assets\/images\/products\/jullie-jRP38bs.webp",
+    "images\/products\/melancholy.jpg": "\/assets\/images\/products\/melancholy-lXkfI0O.jpg",
+    "images\/products\/mystery.jpg": "\/assets\/images\/products\/mystery-7r9UxxQ.jpg",
+    "images\/products\/rue.webp": "\/assets\/images\/products\/rue-KPcXPb5.webp",
+    "images\/products\/silky.webp": "\/assets\/images\/products\/silky-MIaqHiU.webp",
+    "stimulus_bootstrap.js": "\/assets\/stimulus_bootstrap-fWNU0-I.js",
+    "styles\/app.css": "\/assets\/styles\/app-yeb2YZw.css",
+    "vendor\/@hotwired\/stimulus\/stimulus.index.js": "\/assets\/vendor\/@hotwired\/stimulus\/stimulus.index-S4zNcea.js",
+    "vendor\/@hotwired\/turbo\/turbo.index.js": "\/assets\/vendor\/@hotwired\/turbo\/turbo.index-pT15T6h.js"
+}
