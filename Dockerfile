@@ -18,19 +18,20 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
-# Copy project
+# Copy app
 COPY . .
 
-# Install PHP dependencies
+# Install dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
     --no-scripts
 
-# Writable Symfony folders
+# Symfony required folders + FIX PERMISSIONS
 RUN mkdir -p var/cache var/log var/sessions \
-    && chmod -R 777 var
+    && chown -R www-data:www-data var \
+    && chmod -R 775 var
 
 # Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf

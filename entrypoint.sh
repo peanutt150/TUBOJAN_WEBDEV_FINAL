@@ -3,21 +3,20 @@ set -e
 
 echo "Starting container..."
 
-# Fix permissions
-if [ -d /var/www/html/var ]; then
-  chmod -R 777 /var/www/html/var || true
-  chown -R www-data:www-data /var/www/html/var || true
-fi
+# FIX PERMISSIONS FIRST (CRITICAL)
+chown -R www-data:www-data /var/www/html/var || true
+chmod -R 775 /var/www/html/var || true
 
 echo "Starting PHP-FPM..."
 php-fpm -D
 sleep 2
 
-# Symfony setup
+# Symfony boot safety
 if [ -f bin/console ]; then
-  echo "Running Symfony setup..."
-
+  echo "Clearing cache..."
   php bin/console cache:clear --env=prod --no-debug || true
+
+  echo "Running migrations..."
   php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
 fi
 
