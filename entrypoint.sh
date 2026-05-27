@@ -1,10 +1,7 @@
 #!/bin/bash
 set -e
 
-# Default PORT to 8080
-export PORT=${PORT:-8080}
-
-echo "Starting entrypoint, PORT=$PORT"
+echo "Starting container..."
 
 # Fix permissions
 if [ -d /var/www/html/var ]; then
@@ -12,25 +9,16 @@ if [ -d /var/www/html/var ]; then
   chown -R www-data:www-data /var/www/html/var || true
 fi
 
-# START PHP-FPM FIRST (before running Symfony commands)
 echo "Starting PHP-FPM..."
 php-fpm -D
 sleep 2
 
-# Install JS assets and run Symfony setup commands
+# Symfony setup
 if [ -f bin/console ]; then
-  echo "Installing JS assets..."
-  php bin/console importmap:install || true
-  echo "Clearing cache..."
-  php bin/console cache:clear --env=prod --no-debug || true
-  echo "Running database migrations..."
-  php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
-fi
+  echo "Running Symfony setup..."
 
-# Render nginx template and start nginx
-if [ -f /etc/nginx/conf.d/default.conf.template ]; then
-  echo "Configuring Nginx port ($PORT)..."
-  envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+  php bin/console cache:clear --env=prod --no-debug || true
+  php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
 fi
 
 echo "Starting Nginx..."
