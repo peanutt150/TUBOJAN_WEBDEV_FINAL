@@ -1,36 +1,37 @@
 #!/bin/bash
 set -e
 
+# Default PORT to 8080
 export PORT=${PORT:-8080}
 
-echo "Starting app on port $PORT"
+echo "Starting entrypoint, PORT=$PORT"
 
 # Fix permissions
-mkdir -p var/cache var/log var/sessions
-chmod -R 777 var || true
+if [ -d /var/www/html/var ]; then
+  chmod -R 777 /var/www/html/var || true
+  chown -R www-data:www-data /var/www/html/var || true
+fi
 
-# Start PHP-FPM
+# START PHP-FPM FIRST (before running Symfony commands)
+echo "Starting PHP-FPM..."
 php-fpm -D
 sleep 2
 
-# Run Symfony only if safe
+# Install JS assets and run Symfony setup commands
 if [ -f bin/console ]; then
-    echo "Running Symfony setup..."
-
-    su -s /bin/bash www-data -c "php bin/console cache:clear --env=prod --no-debug" || true
-    su -s /bin/bash www-data -c "php bin/console cache:warmup --env=prod" || true
-
-    # ONLY RUN MIGRATIONS IF DATABASE_URL EXISTS
-    if [ ! -z "$DATABASE_URL" ]; then
-        su -s /bin/bash www-data -c "php bin/console doctrine:migrations:migrate --no-interaction --env=prod" || true
-    else
-        echo "DATABASE_URL missing — skipping migrations"
-    fi
+  echo "Installing JS assets..."
+  php bin/console importmap:install || true
+  echo "Clearing cache..."
+  php bin/console cache:clear --env=prod --no-debug || true
+  echo "Running database migrations..."
+  php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
 fi
 
-# Inject port into nginx
-envsubst '${PORT}' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp && \
-mv /etc/nginx/conf.d/default.conf.tmp /etc/nginx/conf.d/default.conf
+# Render nginx template and start nginx
+if [ -f /etc/nginx/conf.d/default.conf.template ]; then
+  echo "Configuring Nginx port ($PORT)..."
+  envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+fi
 
 echo "Starting Nginx..."
 exec nginx -g "daemon off;"
