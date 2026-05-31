@@ -1,49 +1,36 @@
 #!/bin/bash
 set -e
 
-echo "Starting container..."
+export PORT=${PORT:-8080}
 
-# Get Railway's PORT
-PORT="${PORT:-8080}"
-echo "Using port: $PORT"
+echo "Starting app on port $PORT"
 
-# Update Nginx to use Railway's PORT
-if [ -f /etc/nginx/conf.d/default.conf ]; then
-    echo "Updating Nginx to listen on port $PORT..."
-    sed -i "s/listen 8080/listen $PORT/g" /etc/nginx/conf.d/default.conf
-fi
+# Fix permissions
+mkdir -p var/cache var/log var/sessions
+chmod -R 777 var || true
 
-# FIX PERMISSIONS
-chown -R www-data:www-data /var/www/html/var || true
-chmod -R 777 /var/www/html/var || true
-
-# ==============================================
-# CRITICAL FIX: Create autoload_runtime.php at runtime
-# ==============================================
-echo "Checking for autoload_runtime.php..."
-if [ ! -f /var/www/html/vendor/autoload_runtime.php ]; then
-    echo "Creating autoload_runtime.php symlink at runtime..."
-    # Try absolute path first
-    if [ -f /var/www/html/vendor/autoload.php ]; then
-        ln -sf /var/www/html/vendor/autoload.php /var/www/html/vendor/autoload_runtime.php
-        echo "Symlink created successfully"
-    else
-        echo "ERROR: vendor/autoload.php not found either!"
-        ls -la /var/www/html/vendor/ | head -20
-    fi
-fi
-
-# Verify it exists now
-if [ -f /var/www/html/vendor/autoload_runtime.php ]; then
-    echo "✓ autoload_runtime.php exists"
-else
-    echo "✗ autoload_runtime.php still missing - creating empty file as last resort"
-    echo "<?php return require __DIR__.'/autoload.php'; ?>" > /var/www/html/vendor/autoload_runtime.php
-fi
-
-echo "Starting PHP-FPM..."
+# Start PHP-FPM
 php-fpm -D
 sleep 2
 
-echo "Starting Nginx on port $PORT..."
+# Run Symfony only if safe
+if [ -f bin/console ]; then
+    echo "Running Symfony setup..."
+
+    su -s /bin/bash www-data -c "php bin/console cache:clear --env=prod --no-debug" || true
+    su -s /bin/bash www-data -c "php bin/console cache:warmup --env=prod" || true
+
+    # ONLY RUN MIGRATIONS IF DATABASE_URL EXISTS
+    if [ ! -z "$DATABASE_URL" ]; then
+        su -s /bin/bash www-data -c "php bin/console doctrine:migrations:migrate --no-interaction --env=prod" || true
+    else
+        echo "DATABASE_URL missing — skipping migrations"
+    fi
+fi
+
+# Inject port into nginx
+envsubst '${PORT}' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp && \
+mv /etc/nginx/conf.d/default.conf.tmp /etc/nginx/conf.d/default.conf
+
+echo "Starting Nginx..."
 exec nginx -g "daemon off;"
