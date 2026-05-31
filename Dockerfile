@@ -18,20 +18,25 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
-# Copy app
-COPY . .
+# Copy ONLY composer files first (for layer caching)
+COPY composer.json composer.lock* ./
 
-RUN rm -rf vendor
-# Install dependencies
+# Install dependencies BEFORE copying full app
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --optimize-autoloader \
     --no-interaction \
-    
-RUN ls -la vendor | head -50    
+    --no-dev \
+    --no-scripts
+
+# Now copy the rest of the app
+COPY . .
+
+# Verify vendor exists
+RUN ls -la vendor/autoload_runtime.php
 
 RUN php bin/console cache:clear --env=prod || true
 
-# Symfony required folders + FIX PERMISSIONS
+# Symfony required folders
 RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
 
