@@ -2,35 +2,46 @@ FROM php:8.3-fpm
 
 WORKDIR /var/www/html
 
-RUN apt-get update && apt-get install -y \
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl zip unzip \
     libicu-dev libxml2-dev libonig-dev \
     nginx \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install intl xml pdo pdo_mysql mbstring opcache
+# PHP extensions
+RUN docker-php-ext-install \
+    intl xml pdo pdo_mysql mbstring opcache
 
+# Composer
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
-# 1. COPY ONLY composer files FIRST
+# Copy ONLY composer files first (important)
 COPY composer.json composer.lock ./
 
-# 2. INSTALL DEPENDENCIES FIRST
+# Install dependencies WITHOUT scripts (IMPORTANT FIX)
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
+    --no-dev \
     --optimize-autoloader \
-    --no-interaction
+    --no-interaction \
+    --no-scripts
 
-# 3. COPY REST OF APP
+# Copy full project AFTER install
 COPY . .
 
-# 4. FIX PERMISSIONS
+# Fix permissions
 RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
 
+# Now safely run Symfony commands AFTER everything exists
+RUN php bin/console cache:clear --env=prod || true
+
+# Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
