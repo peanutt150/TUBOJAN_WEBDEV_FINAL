@@ -17,50 +17,33 @@ fi
 chown -R www-data:www-data /var/www/html/var || true
 chmod -R 777 /var/www/html/var || true
 
-echo "Starting PHP-FPM..."
-php-fpm -D
-sleep 2
-
-# Check if PHP-FPM is running
-if ! pgrep php-fpm > /dev/null; then
-    echo "ERROR: PHP-FPM failed to start"
-    exit 1
-fi
-
-# Symfony cache clear (optional, won't crash)
-if [ -f bin/console ]; then
-    echo "Clearing cache..."
-    php bin/console cache:clear --env=prod --no-debug || echo "Cache clear skipped"
-    
-    # COMMENT THIS OUT COMPLETELY
-    # echo "Running migrations..."
-    # php bin/console doctrine:migrations:migrate --no-interaction --env=prod || echo "Migrations skipped"
-fi
-
-# Verify critical files
-echo "Verifying files..."
-ls -la /var/www/html/vendor/autoload_runtime.php || echo "autoload_runtime.php check"
-
-echo "Starting Nginx on port $PORT..."
-exec nginx -g "daemon off;"
-fi
-
-# Symfony boot safety
-if [ -f bin/console ]; then
-    echo "Clearing cache..."
-    php bin/console cache:clear --env=prod --no-debug || true
-    
-    # Only run migrations if Doctrine is installed
-    if composer show | grep -q "doctrine/migrations"; then
-        echo "Running migrations..."
-        php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
+# ==============================================
+# CRITICAL FIX: Create autoload_runtime.php at runtime
+# ==============================================
+echo "Checking for autoload_runtime.php..."
+if [ ! -f /var/www/html/vendor/autoload_runtime.php ]; then
+    echo "Creating autoload_runtime.php symlink at runtime..."
+    # Try absolute path first
+    if [ -f /var/www/html/vendor/autoload.php ]; then
+        ln -sf /var/www/html/vendor/autoload.php /var/www/html/vendor/autoload_runtime.php
+        echo "Symlink created successfully"
+    else
+        echo "ERROR: vendor/autoload.php not found either!"
+        ls -la /var/www/html/vendor/ | head -20
     fi
 fi
 
-# Debug: verify critical files exist
-echo "Verifying critical files:"
-ls -la /var/www/html/public/index.php || echo "ERROR: index.php not found!"
-ls -la /var/www/html/vendor/autoload_runtime.php || echo "ERROR: autoload_runtime.php not found!"
+# Verify it exists now
+if [ -f /var/www/html/vendor/autoload_runtime.php ]; then
+    echo "✓ autoload_runtime.php exists"
+else
+    echo "✗ autoload_runtime.php still missing - creating empty file as last resort"
+    echo "<?php return require __DIR__.'/autoload.php'; ?>" > /var/www/html/vendor/autoload_runtime.php
+fi
+
+echo "Starting PHP-FPM..."
+php-fpm -D
+sleep 2
 
 echo "Starting Nginx on port $PORT..."
 exec nginx -g "daemon off;"
