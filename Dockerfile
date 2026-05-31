@@ -21,28 +21,24 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 # Copy app
 COPY . .
 
-# Install dependencies (FIXED: removed trailing backslash)
+# REMOVE DOCTRINE CONFIG FILES (Fixes the cache:clear error)
+RUN rm -f config/packages/doctrine.yaml config/packages/doctrine_migrations.yaml
+
+# Install dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --optimize-autoloader \
     --no-interaction
 
-# FIX: Create autoload_runtime.php symlink if missing (critical for Railway)
+# Create autoload_runtime.php symlink (Fixes the missing file error)
 RUN if [ ! -f vendor/autoload_runtime.php ]; then \
-        echo "Creating symlink for autoload_runtime.php"; \
         ln -sf autoload.php vendor/autoload_runtime.php; \
     fi
 
-# Debug: verify files exist
-RUN ls -la vendor/ | head -20
-
-# Clear cache
-RUN php bin/console cache:clear --env=prod || true
-
-# Symfony required folders + FIX PERMISSIONS
+# Symfony required folders + fix permissions
 RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
 
-# Nginx config (main and site config)
+# Nginx config
 COPY nginx-main.conf /etc/nginx/nginx.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
@@ -50,7 +46,6 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Use Railway's PORT environment variable
 EXPOSE ${PORT:-8080}
 
 CMD ["/entrypoint.sh"]
