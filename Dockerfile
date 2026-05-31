@@ -21,20 +21,20 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 # Copy app
 COPY . .
 
-# REMOVE DOCTRINE CONFIG FILES (Fixes the cache:clear error)
-RUN rm -f config/packages/doctrine.yaml config/packages/doctrine_migrations.yaml
+# Remove ALL config packages (temporarily to fix build)
+RUN rm -rf config/packages/*.yaml config/routes/*.yaml 2>/dev/null || true
 
 # Install dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --optimize-autoloader \
     --no-interaction
 
-# Create autoload_runtime.php symlink (Fixes the missing file error)
+# Create autoload_runtime.php symlink
 RUN if [ ! -f vendor/autoload_runtime.php ]; then \
         ln -sf autoload.php vendor/autoload_runtime.php; \
     fi
 
-# Symfony required folders + fix permissions
+# Create required directories
 RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
 
