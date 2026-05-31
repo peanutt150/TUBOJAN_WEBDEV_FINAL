@@ -21,9 +21,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 # Copy app
 COPY . .
 
+RUN rm -rf vendor
 # Install dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
-    --no-dev \
     --optimize-autoloader \
     --no-interaction \
     
