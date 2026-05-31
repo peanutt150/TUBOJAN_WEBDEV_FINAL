@@ -5,7 +5,7 @@ echo "Starting container..."
 
 # FIX PERMISSIONS FIRST (CRITICAL)
 chown -R www-data:www-data /var/www/html/var || true
-chmod -R 775 /var/www/html/var || true
+chmod -R 777 /var/www/html/var || true
 
 echo "Starting PHP-FPM..."
 php-fpm -D
