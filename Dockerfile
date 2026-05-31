@@ -27,6 +27,7 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --optimize-autoloader \
     --no-interaction \
     
+RUN ls -la vendor | head -50    
 
 RUN php bin/console cache:clear --env=prod || true
 
