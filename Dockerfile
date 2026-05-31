@@ -18,25 +18,21 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
-# Copy ONLY composer files first (important)
+# Copy ONLY composer files first (important for stable builds)
 COPY composer.json composer.lock ./
 
-# Install dependencies WITHOUT scripts (IMPORTANT FIX)
+# Install dependencies (NO manual Symfony execution here)
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
     --optimize-autoloader \
-    --no-interaction \
-    --no-scripts
+    --no-interaction
 
-# Copy full project AFTER install
+# Copy full project AFTER dependencies
 COPY . .
 
-# Fix permissions
+# Create required Symfony folders (safe only)
 RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
-
-# Now safely run Symfony commands AFTER everything exists
-RUN php bin/console cache:clear --env=prod || true
 
 # Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
