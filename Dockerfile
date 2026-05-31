@@ -26,7 +26,7 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
-    --no-scripts
+    
 
 RUN php bin/console cache:clear --env=prod || true
 
