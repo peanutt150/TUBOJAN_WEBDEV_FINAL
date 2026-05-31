@@ -1,3 +1,4 @@
+
 FROM php:8.3-fpm
 
 WORKDIR /var/www/html
@@ -18,20 +19,20 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
-# Copy ONLY composer files first (important for stable builds)
-COPY composer.json composer.lock ./
-
-# Install dependencies (NO manual Symfony execution here)
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
-    --no-dev \
-    --optimize-autoloader \
-    --no-interaction \
-    --no-scripts
-
-# Copy full project AFTER dependencies
+# Copy app
 COPY . .
 
-# Create required Symfony folders (safe only)
+RUN rm -rf vendor
+# Install dependencies
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
+    --optimize-autoloader \
+    --no-interaction \
+    
+RUN ls -la vendor | head -50    
+
+RUN php bin/console cache:clear --env=prod || true
+
+# Symfony required folders + FIX PERMISSIONS
 RUN mkdir -p var/cache var/log var/sessions \
     && chmod -R 777 var
 
@@ -45,3 +46,4 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 8080
 
 CMD ["/entrypoint.sh"]
+
