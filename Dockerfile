@@ -28,10 +28,11 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-interaction \
     --no-scripts
 
+RUN php bin/console cache:clear --env=prod || true
+
 # Symfony required folders + FIX PERMISSIONS
 RUN mkdir -p var/cache var/log var/sessions \
-    && chown -R www-data:www-data var \
-    && chmod -R 775 var
+    && chmod -R 777 var
 
 # Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
